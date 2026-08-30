@@ -1,0 +1,7 @@
+﻿.env
+**/.env
+**/__pycache__/
+**/.venv/
+week1/
+week2/
+week3/
