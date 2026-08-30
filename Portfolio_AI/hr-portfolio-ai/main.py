@@ -1,0 +1,42 @@
+import os
+# from pathlib import Path
+import json
+from profile import profile
+from dotenv import load_dotenv
+from groq import Groq
+
+load_dotenv()
+my_api_key=os.getenv("GROQ_API_KEY")
+
+if not my_api_key:
+    raise ValueError("API key kaha hai bhai")
+
+client=Groq(api_key=my_api_key)
+
+model="openai/gpt-oss-120b"
+
+profile_json=json.dumps(profile, indent=4)
+
+prompt = """
+    What is his favorite programming language?
+"""
+message={
+    "role": "user",
+    "content": prompt
+}
+sys_prompt= f"""
+
+You are a helpful assistant that explains complex topics in simple terms. use profile's content to answer as it is your only knowledge base. Do not make up any information. If the information is not present in profile.py, respond with "I don't know".
+
+this is the profile {profile_json}
+"""
+
+message_system={
+    "role": "system",
+    "content": sys_prompt
+}
+messages=[message_system, message]
+
+response=client.chat.completions.create(messages=messages, model=model)
+answer=response.choices[0].message.content
+print(answer)
