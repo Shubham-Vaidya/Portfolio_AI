@@ -17,26 +17,38 @@ model="openai/gpt-oss-120b"
 
 profile_json=json.dumps(profile, indent=4)
 
-prompt = """
-    What is his favorite programming language?
-"""
-message={
-    "role": "user",
-    "content": prompt
-}
+##############################################################
+
 sys_prompt= f"""
 
-You are a helpful assistant that explains complex topics in simple terms. use profile's content to answer as it is your only knowledge base. Do not make up any information. If the information is not present in profile.py, respond with "I don't know".
+    You are a helpful assistant that explains complex topics in simple terms. use profile's content to answer as it is your only knowledge base. Do not make up any information. If the information is not present in profile.py, respond with "I don't know".
 
-this is the profile {profile_json}
-"""
+    this is the profile {profile_json}
+    """
 
 message_system={
-    "role": "system",
-    "content": sys_prompt
-}
-messages=[message_system, message]
+        "role": "system",
+        "content": sys_prompt
+    }   
+messages=[message_system]  
+while True:
 
-response=client.chat.completions.create(messages=messages, model=model)
-answer=response.choices[0].message.content
-print(answer)
+    prompt = input("Ask me anything (type 'exit' to quit): ")
+    if prompt.lower() == 'exit':
+        break
+
+    # prompt = """
+    # What language does he know?
+    # """
+    message={
+    "role": "user",
+    "content": prompt
+        }
+    
+    messages.append(message)
+
+    response=client.chat.completions.create(messages=messages, model=model)
+    answer=response.choices[0].message.content
+    print(answer)
+
+    messages.append({"role": "assistant", "content": answer})
