@@ -17,26 +17,25 @@ client=Groq(api_key=my_api_key)
 
 model="openai/gpt-oss-120b"
 
-# Profile content as JSON string
-profile_json=json.dumps(profile, indent=4)
 
-##############################################################
+def create_system_message(profile):
+    # Profile content as JSON string
+    profile_json=json.dumps(profile, indent=4)
 
-sys_prompt= f"""
+    sys_prompt= f"""
 
     You are a helpful assistant that explains complex topics in simple terms. use profile's content to answer as it is your only knowledge base. Do not make up any information. If the information is not present in profile.py, respond with "I don't know".
 
     this is the profile {profile_json}
     """
 
-message_system={
+    message_system={
         "role": "system",
         "content": sys_prompt
     }   
-messages=[message_system]  
+    return message_system
 
 
-  
 def ask_llm(messages, model):
     response=client.chat.completions.create(messages=messages, model=model)
     answer=response.choices[0].message.content
@@ -45,6 +44,8 @@ def ask_llm(messages, model):
 
 def run_chat():
     #LLM communication loop 
+    
+    messages=[create_system_message(profile)]  
     while True:
 
         prompt = input("Ask me anything (type 'exit' to quit): ")
