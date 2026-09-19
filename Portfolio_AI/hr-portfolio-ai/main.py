@@ -1,3 +1,5 @@
+# configuration
+
 import os
 # from pathlib import Path
 import json
@@ -15,6 +17,7 @@ client=Groq(api_key=my_api_key)
 
 model="openai/gpt-oss-120b"
 
+# Profile content as JSON string
 profile_json=json.dumps(profile, indent=4)
 
 ##############################################################
@@ -31,24 +34,37 @@ message_system={
         "content": sys_prompt
     }   
 messages=[message_system]  
-while True:
 
-    prompt = input("Ask me anything (type 'exit' to quit): ")
-    if prompt.lower() == 'exit':
-        break
 
-    # prompt = """
-    # What language does he know?
-    # """
-    message={
-    "role": "user",
-    "content": prompt
-        }
-    
-    messages.append(message)
-
+  
+def ask_llm(messages, model):
     response=client.chat.completions.create(messages=messages, model=model)
     answer=response.choices[0].message.content
-    print(answer)
+    return answer   
 
-    messages.append({"role": "assistant", "content": answer})
+
+def run_chat():
+    #LLM communication loop 
+    while True:
+
+        prompt = input("Ask me anything (type 'exit' to quit): ")
+        if prompt.lower() == 'exit':
+            break
+
+        # prompt = """
+        # What language does he know?
+        # """
+        message={
+        "role": "user",
+        "content": prompt
+            }
+        
+        messages.append(message)
+    
+        answer = ask_llm(messages, model)
+        print("Answer:", answer)
+        messages.append({"role": "assistant", "content": answer})
+
+
+if __name__ == "__main__":
+    run_chat()
