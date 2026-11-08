@@ -95,8 +95,11 @@ Once those files are added, embed them here, for example:
 
 ```markdown
 ![HR Portfolio AI application](docs/screenshots/application-home.png)
+
 ![Candidate question answering](docs/screenshots/candidate-qa.png)
+
 ![Job description upload](docs/screenshots/jd-upload.png)
+
 ![Job description analysis](docs/screenshots/jd-analysis.png)
 ```
 
