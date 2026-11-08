@@ -1,11 +1,11 @@
 
+import os
 from pathlib import Path
 from uuid import uuid5, uuid4, NAMESPACE_URL
 
+from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
-
 from qdrant_client import QdrantClient
-
 from qdrant_client.models import (
     Distance,
     VectorParams,
@@ -13,7 +13,8 @@ from qdrant_client.models import (
     Filter,
     FieldCondition,
     MatchValue,
-    FilterSelector
+    FilterSelector,
+    PayloadSchemaType,
 )
 
 
@@ -23,7 +24,12 @@ from qdrant_client.models import (
 
 BASE_DIR = Path(__file__).resolve().parent
 
+load_dotenv(BASE_DIR / ".env")
+
 QDRANT_PATH = BASE_DIR / "qdrant_storage"
+
+QDRANT_URL = os.getenv("QDRANT_URL")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 
 PROFILE_COLLECTION = "candidate_profile"
 JD_COLLECTION = "job_descriptions"
@@ -31,7 +37,6 @@ JD_COLLECTION = "job_descriptions"
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 VECTOR_SIZE = 384
-
 
 _embedding_model = None
 _qdrant_client = None
@@ -58,9 +63,25 @@ def get_qdrant_client():
     global _qdrant_client
 
     if _qdrant_client is None:
-        _qdrant_client = QdrantClient(
-            path=str(QDRANT_PATH)
-        )
+
+        if QDRANT_URL:
+            # Connect to Qdrant Cloud
+            if not QDRANT_API_KEY:
+                raise ValueError(
+                    "QDRANT_API_KEY is required when QDRANT_URL is configured."
+                )
+
+            _qdrant_client = QdrantClient(
+                url=QDRANT_URL,
+                api_key=QDRANT_API_KEY,
+                timeout=30,
+            )
+
+        else:
+            # Local development fallback
+            _qdrant_client = QdrantClient(
+                path=str(QDRANT_PATH)
+            )
 
     return _qdrant_client
 
@@ -94,19 +115,17 @@ def profile_to_documents(profile):
             for index, item in enumerate(value):
 
                 if isinstance(item, dict):
-
                     details = "\n".join(
                         f"{key}: {format_value(val)}"
                         for key, val in item.items()
                     )
-
                 else:
                     details = format_value(item)
 
                 documents.append({
                     "id": f"{section}-{index}",
                     "category": section,
-                    "text": f"Category: {section}\n{details}"
+                    "text": f"Category: {section}\n{details}",
                 })
 
         elif isinstance(value, dict):
@@ -119,7 +138,7 @@ def profile_to_documents(profile):
             documents.append({
                 "id": section,
                 "category": section,
-                "text": f"Category: {section}\n{details}"
+                "text": f"Category: {section}\n{details}",
             })
 
         else:
@@ -127,7 +146,7 @@ def profile_to_documents(profile):
             documents.append({
                 "id": section,
                 "category": section,
-                "text": f"Category: {section}\n{value}"
+                "text": f"Category: {section}\n{value}",
             })
 
     return documents
@@ -147,10 +166,26 @@ def ensure_collection(collection_name):
             collection_name=collection_name,
             vectors_config=VectorParams(
                 size=VECTOR_SIZE,
-                distance=Distance.COSINE
-            )
+                distance=Distance.COSINE,
+            ),
         )
 
+def ensure_jd_session_index():
+
+    client = get_qdrant_client()
+
+    collection_info = client.get_collection(JD_COLLECTION)
+
+    if "session_id" not in collection_info.payload_schema:
+
+        client.create_payload_index(
+            collection_name=JD_COLLECTION,
+            field_name="session_id",
+            field_schema=PayloadSchemaType.KEYWORD,
+            wait=True,
+        )
+
+        print("Created Qdrant payload index: session_id")
 
 def create_collection(reset=False):
 
@@ -178,7 +213,6 @@ def index_profile(profile):
         raise ValueError("Candidate profile is empty.")
 
     model = get_embedding_model()
-
     client = get_qdrant_client()
 
     create_collection(reset=True)
@@ -190,7 +224,7 @@ def index_profile(profile):
 
     embeddings = model.encode(
         texts,
-        normalize_embeddings=True
+        normalize_embeddings=True,
     )
 
     points = []
@@ -200,7 +234,7 @@ def index_profile(profile):
         point_id = str(
             uuid5(
                 NAMESPACE_URL,
-                f'{document["id"]}:{document["text"]}'
+                f'{document["id"]}:{document["text"]}',
             )
         )
 
@@ -211,15 +245,15 @@ def index_profile(profile):
                 payload={
                     "text": document["text"],
                     "category": document["category"],
-                    "source": "candidate_profile"
-                }
+                    "source": "candidate_profile",
+                },
             )
         )
 
     client.upsert(
         collection_name=PROFILE_COLLECTION,
         points=points,
-        wait=True
+        wait=True,
     )
 
     return len(points)
@@ -232,11 +266,9 @@ def index_profile(profile):
 def retrieve_context(query, top_k=4):
 
     model = get_embedding_model()
-
     client = get_qdrant_client()
 
     if not client.collection_exists(PROFILE_COLLECTION):
-
         raise RuntimeError(
             "Candidate profile collection not found. "
             "Run ingest_profile.py first."
@@ -244,14 +276,14 @@ def retrieve_context(query, top_k=4):
 
     query_embedding = model.encode(
         query,
-        normalize_embeddings=True
+        normalize_embeddings=True,
     ).tolist()
 
     results = client.query_points(
         collection_name=PROFILE_COLLECTION,
         query=query_embedding,
         limit=top_k,
-        with_payload=True
+        with_payload=True,
     ).points
 
     context = []
@@ -278,12 +310,15 @@ def index_job_description(chunks, session_id):
         raise ValueError("No JD chunks available for indexing.")
 
     model = get_embedding_model()
-
     client = get_qdrant_client()
 
     ensure_collection(JD_COLLECTION)
 
+    # Required for filtering JD chunks by session_id
+    ensure_jd_session_index()
+
     # Remove the previous JD for this session, if any
+    # Delete the previous JD belonging to this session
     client.delete(
         collection_name=JD_COLLECTION,
         points_selector=FilterSelector(
@@ -291,17 +326,17 @@ def index_job_description(chunks, session_id):
                 must=[
                     FieldCondition(
                         key="session_id",
-                        match=MatchValue(value=session_id)
+                        match=MatchValue(value=session_id),
                     )
                 ]
             )
         ),
-        wait=True
+        wait=True,
     )
 
     embeddings = model.encode(
         chunks,
-        normalize_embeddings=True
+        normalize_embeddings=True,
     )
 
     points = []
@@ -318,15 +353,15 @@ def index_job_description(chunks, session_id):
                     "text": chunk,
                     "source": "job_description",
                     "session_id": session_id,
-                    "chunk_index": index
-                }
+                    "chunk_index": index,
+                },
             )
         )
 
     client.upsert(
         collection_name=JD_COLLECTION,
         points=points,
-        wait=True
+        wait=True,
     )
 
     return len(points)
@@ -339,7 +374,6 @@ def index_job_description(chunks, session_id):
 def retrieve_jd_context(query, session_id, top_k=5):
 
     model = get_embedding_model()
-
     client = get_qdrant_client()
 
     if not client.collection_exists(JD_COLLECTION):
@@ -347,7 +381,7 @@ def retrieve_jd_context(query, session_id, top_k=5):
 
     query_embedding = model.encode(
         query,
-        normalize_embeddings=True
+        normalize_embeddings=True,
     ).tolist()
 
     results = client.query_points(
@@ -357,12 +391,12 @@ def retrieve_jd_context(query, session_id, top_k=5):
             must=[
                 FieldCondition(
                     key="session_id",
-                    match=MatchValue(value=session_id)
+                    match=MatchValue(value=session_id),
                 )
             ]
         ),
         limit=top_k,
-        with_payload=True
+        with_payload=True,
     ).points
 
     context = []
@@ -376,6 +410,24 @@ def retrieve_jd_context(query, session_id, top_k=5):
         )
 
     return "\n\n".join(context)
+
+
+# ============================================================
+# CONNECTION TEST
+# ============================================================
+
+def test_qdrant_connection():
+
+    client = get_qdrant_client()
+
+    collections = client.get_collections()
+
+    print("Qdrant connection successful!")
+
+    print("Available collections:")
+
+    for collection in collections.collections:
+        print(f"- {collection.name}")
 
 
 # ============================================================
