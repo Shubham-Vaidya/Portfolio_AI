@@ -80,39 +80,19 @@ The assistant is intended to answer from the candidate profile and uploaded JD c
 | **Interactive API documentation** | https://portfolio-ai-bz6f.onrender.com/docs |
 | **GitHub repository** | https://github.com/Shubham-Vaidya/Portfolio_AI |
 
-<!-- ### Application screenshots
+### Application screenshots
 
-<!-- Add real screenshots of the deployed interface to `docs/screenshots/` in the repository, then keep the image paths below in sync. Suggested captures: -->
+#### Main Application
+![Main application](docs/screenshots/application-home.png)
 
-| Screenshot | Suggested file | What it should show |
-|---|---|---|
-| Main application | `docs/screenshots/application-home.png` | Initial chat screen and candidate assistant UI |
-| Candidate Q&A | `docs/screenshots/candidate-qa.png` | A question and grounded candidate response |
-| JD upload | `docs/screenshots/jd-upload.png` | Selected/uploaded job description and success state |
-| JD analysis | `docs/screenshots/jd-analysis.png` | Candidate-to-role comparison and follow-up answer |
+#### Candidate Q&A
+![Candidate Q&A](docs/screenshots/candidate-qa.png)
 
+#### Job Description Upload
+![Job description upload](docs/screenshots/jd-upload.png)
 
-![HR Portfolio AI application](Portfolio_AI/hr-portfolio-ai/docs/screenshots/application-home.png)
-
-![Candidate question answering](Portfolio_AI/hr-portfolio-ai/docs/screenshots/candidate-qa.png)
-
-![Job description upload](Portfolio_AI/hr-portfolio-ai/docs/screenshots/jd-upload.png)
-
-![Job description analysis](Portfolio_AI/hr-portfolio-ai/docs/screenshots/jd-analysis.png) -->
-
-## Application Screenshots
-
-### Main Application
-![Main application](Portfolio_AI/hr-portfolio-ai/docs/screenshots/application-home.png)
-
-### Candidate Q&A
-![Candidate Q&A](Portfolio_AI/hr-portfolio-ai/docs/screenshots/candidate-qa.png)
-
-### Job Description Upload
-![JD upload](Portfolio_AI/hr-portfolio-ai/docs/screenshots/jd-upload.png)
-
-### Job Description Analysis
-![JD analysis](Portfolio_AI/hr-portfolio-ai/docs/screenshots/jd-analysis.png)
+#### Job Description Analysis
+![Job description analysis](docs/screenshots/jd-analysis.png)
 
 The frontend is hosted on Vercel, the FastAPI backend is hosted on Render, and Qdrant Cloud stores vector data. Groq provides language-model inference.
 
