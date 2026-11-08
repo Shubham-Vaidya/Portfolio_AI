@@ -1,10 +1,11 @@
 
 import os
+import math
 from pathlib import Path
 from uuid import uuid5, uuid4, NAMESPACE_URL
 
 from dotenv import load_dotenv
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,
@@ -47,25 +48,61 @@ _qdrant_client = None
 # ============================================================
 
 def get_embedding_model():
-
     global _embedding_model
 
     if _embedding_model is None:
-        _embedding_model = SentenceTransformer(
-            EMBEDDING_MODEL_NAME
+        _embedding_model = TextEmbedding(
+            model_name=EMBEDDING_MODEL_NAME,
+            threads=1,
         )
 
     return _embedding_model
 
 
-def get_qdrant_client():
+def embed_texts(texts):
+    """
+    Generate normalized embeddings using FastEmbed.
+    Returns a list of 384-dimensional vectors.
+    """
 
+    if not texts:
+        return []
+
+    model = get_embedding_model()
+
+    embeddings = model.embed(
+        texts,
+        batch_size=16,
+    )
+
+    normalized_embeddings = []
+
+    for embedding in embeddings:
+        vector = embedding.tolist()
+
+        magnitude = math.sqrt(
+            sum(value * value for value in vector)
+        )
+
+        if magnitude == 0:
+            raise ValueError("Generated embedding has zero magnitude.")
+
+        normalized_vector = [
+            value / magnitude for value in vector
+        ]
+
+        normalized_embeddings.append(normalized_vector)
+
+    return normalized_embeddings
+
+
+def get_qdrant_client():
     global _qdrant_client
 
     if _qdrant_client is None:
 
         if QDRANT_URL:
-            # Connect to Qdrant Cloud
+
             if not QDRANT_API_KEY:
                 raise ValueError(
                     "QDRANT_API_KEY is required when QDRANT_URL is configured."
@@ -78,7 +115,6 @@ def get_qdrant_client():
             )
 
         else:
-            # Local development fallback
             _qdrant_client = QdrantClient(
                 path=str(QDRANT_PATH)
             )
@@ -170,6 +206,7 @@ def ensure_collection(collection_name):
             ),
         )
 
+
 def ensure_jd_session_index():
 
     client = get_qdrant_client()
@@ -186,6 +223,7 @@ def ensure_jd_session_index():
         )
 
         print("Created Qdrant payload index: session_id")
+
 
 def create_collection(reset=False):
 
@@ -212,7 +250,6 @@ def index_profile(profile):
     if not documents:
         raise ValueError("Candidate profile is empty.")
 
-    model = get_embedding_model()
     client = get_qdrant_client()
 
     create_collection(reset=True)
@@ -222,10 +259,7 @@ def index_profile(profile):
         for document in documents
     ]
 
-    embeddings = model.encode(
-        texts,
-        normalize_embeddings=True,
-    )
+    embeddings = embed_texts(texts)
 
     points = []
 
@@ -241,7 +275,7 @@ def index_profile(profile):
         points.append(
             PointStruct(
                 id=point_id,
-                vector=embedding.tolist(),
+                vector=embedding,
                 payload={
                     "text": document["text"],
                     "category": document["category"],
@@ -265,7 +299,6 @@ def index_profile(profile):
 
 def retrieve_context(query, top_k=4):
 
-    model = get_embedding_model()
     client = get_qdrant_client()
 
     if not client.collection_exists(PROFILE_COLLECTION):
@@ -274,10 +307,7 @@ def retrieve_context(query, top_k=4):
             "Run ingest_profile.py first."
         )
 
-    query_embedding = model.encode(
-        query,
-        normalize_embeddings=True,
-    ).tolist()
+    query_embedding = embed_texts([query])[0]
 
     results = client.query_points(
         collection_name=PROFILE_COLLECTION,
@@ -309,16 +339,13 @@ def index_job_description(chunks, session_id):
     if not chunks:
         raise ValueError("No JD chunks available for indexing.")
 
-    model = get_embedding_model()
     client = get_qdrant_client()
 
     ensure_collection(JD_COLLECTION)
 
-    # Required for filtering JD chunks by session_id
     ensure_jd_session_index()
 
-    # Remove the previous JD for this session, if any
-    # Delete the previous JD belonging to this session
+    # Delete previous JD belonging to this session
     client.delete(
         collection_name=JD_COLLECTION,
         points_selector=FilterSelector(
@@ -334,10 +361,7 @@ def index_job_description(chunks, session_id):
         wait=True,
     )
 
-    embeddings = model.encode(
-        chunks,
-        normalize_embeddings=True,
-    )
+    embeddings = embed_texts(chunks)
 
     points = []
 
@@ -348,7 +372,7 @@ def index_job_description(chunks, session_id):
         points.append(
             PointStruct(
                 id=str(uuid4()),
-                vector=embedding.tolist(),
+                vector=embedding,
                 payload={
                     "text": chunk,
                     "source": "job_description",
@@ -373,16 +397,12 @@ def index_job_description(chunks, session_id):
 
 def retrieve_jd_context(query, session_id, top_k=5):
 
-    model = get_embedding_model()
     client = get_qdrant_client()
 
     if not client.collection_exists(JD_COLLECTION):
         return ""
 
-    query_embedding = model.encode(
-        query,
-        normalize_embeddings=True,
-    ).tolist()
+    query_embedding = embed_texts([query])[0]
 
     results = client.query_points(
         collection_name=JD_COLLECTION,
