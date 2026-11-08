@@ -94,13 +94,13 @@ Add real screenshots of the deployed interface to `docs/screenshots/` in the rep
 Once those files are added, embed them here, for example:
 
 ```markdown
-![HR Portfolio AI application](docs/screenshots/application-home.png)
+![HR Portfolio AI application](Portfolio_AI/hr-portfolio-ai/docs/screenshots/application-home.png)
 
-![Candidate question answering](docs/screenshots/candidate-qa.png)
+![Candidate question answering](Portfolio_AI/hr-portfolio-ai/docs/screenshots/candidate-qa.png)
 
-![Job description upload](docs/screenshots/jd-upload.png)
+![Job description upload](Portfolio_AI/hr-portfolio-ai/docs/screenshots/jd-upload.png)
 
-![Job description analysis](docs/screenshots/jd-analysis.png)
+![Job description analysis](Portfolio_AI/hr-portfolio-ai/docs/screenshots/jd-analysis.png)
 ```
 
 The frontend is hosted on Vercel, the FastAPI backend is hosted on Render, and Qdrant Cloud stores vector data. Groq provides language-model inference.
