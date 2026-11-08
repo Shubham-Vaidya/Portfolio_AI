@@ -1,10 +1,10 @@
-<div align="center">
+﻿<div align="center">
 
 # HR Portfolio AI
 
 ### A Retrieval-Augmented Generation assistant for candidate portfolios and job-description analysis
 
-**Explore a candidate's skills, education, experience and projects through natural language — then compare the profile with a job description.**
+**Explore a candidate's skills, education, experience and projects through natural language â€” then compare the profile with a job description.**
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Open%20Application-7c3aed?style=for-the-badge)](https://hr-portfolio-ai.vercel.app/)
 [![API Docs](https://img.shields.io/badge/API-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://portfolio-ai-bz6f.onrender.com/docs)
@@ -94,13 +94,13 @@ Add real screenshots of the deployed interface to `docs/screenshots/` in the rep
 Once those files are added, embed them here, for example:
 
 ```markdown
-![HR Portfolio AI application](docs/screenshots/application-home.png)
+![HR Portfolio AI application](Portfolio_AI/hr-portfolio-ai/docs/screenshots/application-home.png)
 
-![Candidate question answering](docs/screenshots/candidate-qa.png)
+![Candidate question answering](Portfolio_AI/hr-portfolio-ai/docs/screenshots/candidate-qa.png)
 
-![Job description upload](docs/screenshots/jd-upload.png)
+![Job description upload](Portfolio_AI/hr-portfolio-ai/docs/screenshots/jd-upload.png)
 
-![Job description analysis](docs/screenshots/jd-analysis.png)
+![Job description analysis](Portfolio_AI/hr-portfolio-ai/docs/screenshots/jd-analysis.png)
 ```
 
 The frontend is hosted on Vercel, the FastAPI backend is hosted on Render, and Qdrant Cloud stores vector data. Groq provides language-model inference.
@@ -149,7 +149,7 @@ Example questions:
 - Store JD vectors in Qdrant with a session identifier.
 - Retrieve JD context for questions from the same session.
 
-### Candidate–JD comparison
+### Candidateâ€“JD comparison
 
 Example questions:
 
@@ -184,13 +184,13 @@ flowchart TB
     HR["Recruiter / HR"]
     Candidate["Candidate / Student"]
 
-    subgraph Frontend["Frontend — Vercel"]
+    subgraph Frontend["Frontend â€” Vercel"]
         UI["React 19 + Vite"]
         CSS["Tailwind CSS v4"]
         UI --- CSS
     end
 
-    subgraph Backend["Backend — Render"]
+    subgraph Backend["Backend â€” Render"]
         API["FastAPI REST API"]
         HISTORY["In-memory session history"]
         PARSER["JD parser: PDF / DOCX / TXT"]
@@ -343,7 +343,7 @@ flowchart LR
 
 A language model alone does not automatically know the private or current details in a candidate's profile. RAG supplies relevant source information at question time.
 
-**Retrieve → Augment → Generate**
+**Retrieve â†’ Augment â†’ Generate**
 
 - **Retrieve:** Search Qdrant for relevant candidate and JD chunks.
 - **Augment:** Add retrieved information to the model request.
@@ -361,29 +361,29 @@ The GitHub repository is a monorepo. The application lives under `Portfolio_AI/h
 
 ```text
 Portfolio_AI/
-└── hr-portfolio-ai/
-    ├── api.py                    # FastAPI application and HTTP endpoints
-    ├── main.py                   # LLM interaction and answer orchestration
-    ├── rag.py                    # Embeddings, Qdrant, indexing and retrieval
-    ├── candidate_profile.py      # Candidate's editable profile data
-    ├── ingest_profile.py         # Profile-to-Qdrant ingestion script
-    ├── jd_parser.py              # PDF, DOCX and TXT extraction + chunking
-    ├── pyproject.toml             # Python project and dependencies
-    ├── uv.lock                    # Locked Python dependency versions
-    ├── .python-version            # Python version selection
-    ├── .env                       # Local secrets (never commit)
-    ├── .gitignore
-    ├── README.md
-    └── frontend/
-        ├── src/
-        │   ├── App.jsx            # Main chat and upload interface
-        │   ├── App.css            # Application styles
-        │   └── ...
-        ├── public/
-        ├── index.html
-        ├── package.json
-        ├── package-lock.json
-        └── vite.config.js
+â””â”€â”€ hr-portfolio-ai/
+    â”œâ”€â”€ api.py                    # FastAPI application and HTTP endpoints
+    â”œâ”€â”€ main.py                   # LLM interaction and answer orchestration
+    â”œâ”€â”€ rag.py                    # Embeddings, Qdrant, indexing and retrieval
+    â”œâ”€â”€ candidate_profile.py      # Candidate's editable profile data
+    â”œâ”€â”€ ingest_profile.py         # Profile-to-Qdrant ingestion script
+    â”œâ”€â”€ jd_parser.py              # PDF, DOCX and TXT extraction + chunking
+    â”œâ”€â”€ pyproject.toml             # Python project and dependencies
+    â”œâ”€â”€ uv.lock                    # Locked Python dependency versions
+    â”œâ”€â”€ .python-version            # Python version selection
+    â”œâ”€â”€ .env                       # Local secrets (never commit)
+    â”œâ”€â”€ .gitignore
+    â”œâ”€â”€ README.md
+    â””â”€â”€ frontend/
+        â”œâ”€â”€ src/
+        â”‚   â”œâ”€â”€ App.jsx            # Main chat and upload interface
+        â”‚   â”œâ”€â”€ App.css            # Application styles
+        â”‚   â””â”€â”€ ...
+        â”œâ”€â”€ public/
+        â”œâ”€â”€ index.html
+        â”œâ”€â”€ package.json
+        â”œâ”€â”€ package-lock.json
+        â””â”€â”€ vite.config.js
 ```
 
 This tree highlights the main application files; minor configuration and test files may vary by checkout. Do not commit `.env`, virtual environments, `node_modules` or local Qdrant storage.
@@ -394,11 +394,11 @@ This tree highlights the main application files; minor configuration and test fi
 
 Recruiters do not need to clone the repository or configure credentials.
 
-### Step 1 — Open the application
+### Step 1 â€” Open the application
 
 Go to **https://hr-portfolio-ai.vercel.app/**.
 
-### Step 2 — Ask about the candidate
+### Step 2 â€” Ask about the candidate
 
 ```text
 What programming languages does the candidate know?
@@ -410,7 +410,7 @@ What projects has the candidate worked on?
 Which tools and frameworks are mentioned in the profile?
 ```
 
-### Step 3 — Upload a job description (optional)
+### Step 3 â€” Upload a job description (optional)
 
 1. Select **Choose File**.
 2. Select a PDF, DOCX or TXT job description.
@@ -419,7 +419,7 @@ Which tools and frameworks are mentioned in the profile?
 
 The current upload limit is 10 MB.
 
-### Step 4 — Ask role-specific questions
+### Step 4 â€” Ask role-specific questions
 
 ```text
 What are the key requirements in this job description?
@@ -674,7 +674,7 @@ Do not use another candidate's API keys or database credentials.
 
 ## 12. Environment variables
 
-### Backend — Render and local `.env`
+### Backend â€” Render and local `.env`
 
 | Variable | Required? | Description |
 |---|---:|---|
@@ -685,7 +685,7 @@ Do not use another candidate's API keys or database credentials.
 
 When using Qdrant Cloud, configure both `QDRANT_URL` and `QDRANT_API_KEY`.
 
-### Frontend — `frontend/.env`
+### Frontend â€” `frontend/.env`
 
 | Variable | Required? | Description |
 |---|---:|---|
@@ -794,7 +794,7 @@ This is lightweight but not durable storage:
 
 ## 15. Deployment
 
-### 15.1 Backend — Render
+### 15.1 Backend â€” Render
 
 The backend is deployed from the monorepo using the backend subdirectory as its root.
 
@@ -809,7 +809,7 @@ The backend is deployed from the monorepo using the backend subdirectory as its 
 
 Configure the backend environment variables listed in [Environment variables](#12-environment-variables).
 
-### 15.2 Frontend — Vercel
+### 15.2 Frontend â€” Vercel
 
 The frontend is deployed from the same GitHub repository.
 
@@ -1004,8 +1004,9 @@ Built using the Python and JavaScript ecosystems and the hosted services listed 
 
 <div align="center">
 
-**HR Portfolio AI — making candidate portfolios easier to explore, understand and compare.**
+**HR Portfolio AI â€” making candidate portfolios easier to explore, understand and compare.**
 
-[Live Application](https://hr-portfolio-ai.vercel.app/) · [API Documentation](https://portfolio-ai-bz6f.onrender.com/docs) · [GitHub](https://github.com/Shubham-Vaidya/Portfolio_AI)
+[Live Application](https://hr-portfolio-ai.vercel.app/) Â· [API Documentation](https://portfolio-ai-bz6f.onrender.com/docs) Â· [GitHub](https://github.com/Shubham-Vaidya/Portfolio_AI)
 
 </div>
+
